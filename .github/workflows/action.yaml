@@ -3,7 +3,7 @@ name: Build and Push Docker Image for EKS Helm Client
 on:
   push:
     branches:
-      - master
+      - 'v*.*.*'
 
 jobs:
   build-and-publish-image:
@@ -12,6 +12,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: branch_name
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -30,7 +35,7 @@ jobs:
         with:
           push: true
           platforms: linux/amd64
-          tags: projectoss/eks-helm-client:latest
+          tags: projectoss/eks-helm-client:${{ steps.branch_name.outputs.branch }}
       
       - name: Update repo description
         uses: peter-evans/dockerhub-description@v3
