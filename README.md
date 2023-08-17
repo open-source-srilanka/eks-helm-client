@@ -24,6 +24,7 @@ The Docker EKS Helm Client Agent is a specialized Docker image that acts as a He
 ```
 projectoss/eks-helm-client:latest
 ```
+Currently `latest` tag is refer to Kubernetes v1.27.1.
 
 Sample Jenkins Pipeline Stage
 
