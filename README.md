@@ -7,7 +7,7 @@
 
 ## Overview
 
-The Docker EKS Helm Client Agent is a specialized Docker image that acts as a Helm client that allow you to install, upgrade Helm charts in AWS EKS CLuster, enabling seamless management of Kubernetes deployments. It provides a convenient and portable solution for interacting with Helm charts and deploying applications to chart repositories without the need to install Helm on your local machine or CI/CD pipelines.
+The Docker EKS Helm Client Agent is a specialized Docker image that acts as a Helm client that allow you to install, upgrade Helm charts in AWS EKS Cluster, enabling seamless management of Kubernetes deployments. It provides a convenient and portable solution for interacting with Helm charts and deploying applications to chart repositories without the need to install Helm on your local machine or CI/CD pipelines.
 
 ## Key Features
 
