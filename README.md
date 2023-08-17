@@ -22,7 +22,7 @@ The Docker EKS Helm Client Agent is a specialized Docker image that acts as a He
 ## Usage 
 
 ```
-projectoss/eks-helm-client:latest
+projectoss/eks-helm-client:v1.27.1
 ```
 
 Sample Jenkins Pipeline Stage
@@ -40,7 +40,7 @@ environment {
 stage('Package Helm Chart') {
     agent {
         docker {
-            image 'projectoss/eks-helm-client:latest'
+            image 'projectoss/eks-helm-client:v1.27.1'
         }
     }
     steps {
