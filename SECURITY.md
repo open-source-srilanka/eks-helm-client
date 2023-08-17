@@ -2,7 +2,7 @@
 
 ## Reporting Security Vulnerabilities
 
-TheProjectOSS team and community take security vulnerabilities seriously. We appreciate your efforts to responsibly disclose any potential vulnerabilities.
+TheP rojectOSS team and community take security vulnerabilities seriously. We appreciate your efforts to responsibly disclose any potential vulnerabilities.
 
 To report a security vulnerability, please email us directly at [dinushchathurya21@gmail.com](mailto:dinushchathurya21@gmail.com). Please provide as much information as possible, including:
 
