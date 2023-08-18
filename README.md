@@ -53,6 +53,32 @@ stage('Package Helm Chart') {
 
 ```
 
+Sample GitHub Workflow
+
+```yaml
+steps:
+
+  - name: Setup AWS Credentials
+    uses: aws-actions/configure-aws-credentials@v2.2.0
+    with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} // AWS Access Key ID in GitHub Secrets
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} // AWS Secret Access Key in GitHub Secrets
+        aws-region: ${{ secrets.REGION_CODE }} // REGION_CODE in GitHub Secrets     
+
+  - name: Deploy Helm Chart
+    uses: docker://projectoss/eks-helm-client:v1.27.1
+    env:
+        REGION_CODE: <your-region-code>
+        CLUSTER_NAME: <your-cluster-name>
+    with:
+        args: >
+        bash -c "
+            helm repo add bitnami https://charts.bitnami.com/bitnami;
+            helm repo update;
+            helm install bitnami/mysql --generate-name
+        "
+```
+
 ## Contributing
 
 We welcome contributions from the community to enhance and improve this project! If you'd like to contribute, please follow these steps:
