@@ -53,6 +53,9 @@ stage('Package Helm Chart') {
 }
 
 ```
+
+For more detailed usage instructions, please refer to the [Jenkinsfile](https://github.com/open-source-srilanka/examples/blob/master/eks-helm-client/Jenkinsfile) in this repository. 
+
 Sample GitHub Workflow
 
 ```yaml
@@ -60,10 +63,7 @@ steps:
 
   - name: Setup AWS Credentials
     uses: aws-actions/configure-aws-credentials@v2.2.0
-    with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} // AWS Access Key ID in GitHub Secrets
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} // AWS Secret Access Key in GitHub Secrets
-        aws-region: ${{ secrets.REGION_CODE }} // REGION_CODE in GitHub Secrets     
+    --- 
 
   - name: Deploy Helm Chart
     uses: docker://projectoss/eks-helm-client:latest
@@ -73,11 +73,15 @@ steps:
     with:
         args: >
         bash -c "
+            aws eks update-kubeconfig --name $CLUSTER_NAME --region $REGION_CODE;
             helm repo add bitnami https://charts.bitnami.com/bitnami;
             helm repo update;
             helm install bitnami/mysql --generate-name
         "
 ```
+
+For more detailed usage instructions, please refer to the [action.yaml](https://github.com/open-source-srilanka/examples/blob/master/eks-helm-client/.github/workflows/action.yaml) in this repository.
+
 
 ## Contributing
 
