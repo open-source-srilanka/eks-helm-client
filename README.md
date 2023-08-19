@@ -22,9 +22,8 @@ The Docker EKS Helm Client Agent is a specialized Docker image that acts as a He
 ## Usage 
 
 ```
-projectoss/eks-helm-client:latest
+projectoss/eks-helm-client:v1.27.1
 ```
-Currently `latest` tag refers to Kubernetes v1.27.1.
 
 Sample Jenkins Pipeline Stage
 
@@ -41,7 +40,7 @@ environment {
 stage('Package Helm Chart') {
     agent {
         docker {
-            image 'projectoss/eks-helm-client:latest'
+            image 'projectoss/eks-helm-client:v1.27.1'
         }
     }
     steps {
@@ -51,7 +50,6 @@ stage('Package Helm Chart') {
         sh 'helm install bitnami/mysql --generate-name'
     }
 }
-
 ```
 
 For more detailed usage instructions, please refer to the [Jenkinsfile](https://github.com/open-source-srilanka/examples/blob/master/eks-helm-client/Jenkinsfile) in this repository. 
@@ -63,25 +61,23 @@ steps:
 
   - name: Setup AWS Credentials
     uses: aws-actions/configure-aws-credentials@v2.2.0
-    --- 
+    ---   
 
   - name: Deploy Helm Chart
-    uses: docker://projectoss/eks-helm-client:latest
+    uses: docker://projectoss/eks-helm-client:v1.27.1
     env:
         REGION_CODE: <your-region-code>
         CLUSTER_NAME: <your-cluster-name>
     with:
         args: >
-        bash -c "
-            aws eks update-kubeconfig --name $CLUSTER_NAME --region $REGION_CODE;
-            helm repo add bitnami https://charts.bitnami.com/bitnami;
-            helm repo update;
-            helm install bitnami/mysql --generate-name
-        "
+            bash -c "
+                helm repo add bitnami https://charts.bitnami.com/bitnami;
+                helm repo update;
+                helm install bitnami/mysql --generate-name
+            "
 ```
 
 For more detailed usage instructions, please refer to the [action.yaml](https://github.com/open-source-srilanka/examples/blob/master/eks-helm-client/.github/workflows/action.yaml) in this repository.
-
 
 ## Contributing
 
