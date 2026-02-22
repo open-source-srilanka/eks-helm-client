@@ -29,6 +29,7 @@ if [[ -z "${CLUSTER_NAME:-}" ]]; then
     exit 1
 fi
 
+
 log_info "Configuring kubectl for EKS cluster: ${CLUSTER_NAME} in region: ${REGION_CODE}"
 
 # Fetch EKS cluster information

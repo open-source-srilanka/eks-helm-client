@@ -87,17 +87,3 @@ jobs:
           short-description: "Multi-arch EKS Helm client with kubectl, helm, and aws-iam-authenticator"
           readme-filepath: ./README.md
 
-      # - name: Run Trivy vulnerability scanner
-      #   if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-      #   uses: aquasecurity/trivy-action@0.28.0
-      #   with:
-      #     image-ref: ${{ secrets.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:${{ github.ref == 'refs/heads/develop' && 'develop' || 'latest' }}
-      #     format: 'sarif'
-      #     output: 'trivy-results.sarif'
-      #     severity: 'CRITICAL,HIGH'
-
-      # - name: Upload Trivy results to GitHub Security
-      #   if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-      #   uses: github/codeql-action/upload-sarif@v3
-      #   with:
-      #     sarif_file: 'trivy-results.sarif'
