@@ -3,48 +3,78 @@
 ![Scrutinizer build (GitHub/Bitbucket)](https://img.shields.io/scrutinizer/build/g/open-source-srilanka/eks-helm-client/master)
 ![Docker Pulls](https://img.shields.io/docker/pulls/projectoss/eks-helm-client)
 ![Docker Image Version (latest semver)](https://img.shields.io/docker/v/projectoss/eks-helm-client)
-![Made With By (ProjectOSS)](https://img.shields.io/badge/made%20with%20love%20by-ProjectOSS-orange)
+![Made With Love By (ProjectOSS)](https://img.shields.io/badge/made%20with%20love%20by-ProjectOSS-orange)
 
 ## Overview
 
-The Docker EKS Helm Client Agent is a specialized Docker image that acts as a Helm client that allow you to install, upgrade Helm charts in AWS EKS Cluster, enabling seamless management of Kubernetes deployments. It provides a convenient and portable solution for interacting with Helm charts and deploying applications to chart repositories without the need to install Helm on your local machine or CI/CD pipelines.
+The Docker EKS Helm Client Agent is a specialized Docker image that acts as a Helm client, allowing you to install and upgrade Helm charts in AWS EKS clusters — enabling seamless management of Kubernetes deployments. It provides a convenient, portable solution for interacting with Helm charts without the need to install Helm, kubectl, or the AWS CLI on your local machine or CI/CD pipelines.
 
-## Key Features
+On startup, the container **automatically configures kubectl** by fetching your EKS cluster's CA certificate and endpoint via the AWS CLI, then generating a kubeconfig. Your commands run only after this setup is complete.
 
-- **Helm Commands Made Easy**: Execute Helm commands directly from within the Docker container, without the need to install Helm on your local machine or CI/CD pipelines.
+## Component Versions
 
-- **Consistency Across Environments**: Ensure consistent Helm versions and configurations across various environments, reducing potential issues related to Helm installations.
+| Component | Version |
+|---|---|
+| Kubernetes (kubectl) | 1.31.3 |
+| Helm | 3.16.3 |
+| AWS IAM Authenticator | 0.6.28 |
+| Base image | alpine:3.20 |
 
-- **Optimized for CI/CD Pipelines**: Integrate this Docker image effortlessly into your CI/CD pipelines to automate deployments.
+## Supported Architectures
 
-- **Customizable**: Easily extend the image to include your specific Helm charts or other tools required for your workflows.
+- `linux/amd64`
+- `linux/arm64`
 
-## Usage 
+## Prerequisites
+
+The container requires the following environment variables at runtime:
+
+| Variable | Description |
+|---|---|
+| `REGION_CODE` | AWS region where your EKS cluster is hosted (e.g. `us-east-1`) |
+| `CLUSTER_NAME` | Name of your EKS cluster |
+
+AWS credentials must also be available to the container. These can be provided via `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`, an IAM instance role, or the `aws-actions/configure-aws-credentials` GitHub Action.
+
+> **Note:** The container validates `REGION_CODE` and `CLUSTER_NAME` on startup and will exit immediately if either is missing.
+
+## How It Works
+
+The container entrypoint (`entrypoint.sh`) performs the following steps automatically before executing your command:
+
+1. Validates that `REGION_CODE` and `CLUSTER_NAME` are set
+2. Fetches the cluster CA certificate via `aws eks describe-cluster`
+3. Fetches the cluster API endpoint via `aws eks describe-cluster`
+4. Generates a kubeconfig at `/opt/kubernetes/config` using these values
+5. Verifies kubectl client configuration
+6. Executes the command you passed in
+
+You do **not** need to run `aws eks update-kubeconfig` manually — this is handled automatically.
+
+## Usage
 
 ```
-projectoss/eks-helm-client:v1.27.1
+projectoss/eks-helm-client:latest
 ```
 
-Sample Jenkins Pipeline Stage
+### Sample Jenkins Pipeline Stage
 
 ```groovy
-
 environment {
-    // Below variables are used by EKS client
-    AWS_ACCESS_KEY_ID = credentials('aws-access-key')
+    AWS_ACCESS_KEY_ID     = credentials('aws-access-key')
     AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
-    REGION_CODE = "<your-region-code>"
-    CLUSTER_NAME = "<your-cluster-name>"
+    REGION_CODE           = "<your-region-code>"
+    CLUSTER_NAME          = "<your-cluster-name>"
 }
 
-stage('Package Helm Chart') {
+stage('Deploy Helm Chart') {
     agent {
         docker {
-            image 'projectoss/eks-helm-client:v1.27.1'
+            image 'projectoss/eks-helm-client:latest'
         }
     }
     steps {
-        sh 'aws eks update-kubeconfig --name $CLUSTER_NAME --region $REGION_CODE'
+        // No need to run aws eks update-kubeconfig — entrypoint handles this automatically
         sh 'helm repo add bitnami https://charts.bitnami.com/bitnami'
         sh 'helm repo update'
         sh 'helm install bitnami/mysql --generate-name'
@@ -52,54 +82,55 @@ stage('Package Helm Chart') {
 }
 ```
 
+
 For more detailed usage instructions, please refer to the [Jenkinsfile](https://github.com/open-source-srilanka/examples/blob/master/eks-helm-client/Jenkinsfile) in this repository. 
 
-Sample GitHub Workflow
+### Sample GitHub Actions Workflow
 
 ```yaml
 steps:
-
-  - name: Setup AWS Credentials
+  - name: Configure AWS Credentials
     uses: aws-actions/configure-aws-credentials@v2.2.0
-    ---   
+    with:
+      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      aws-region: <your-region-code>
 
   - name: Deploy Helm Chart
-    uses: docker://projectoss/eks-helm-client:v1.27.1
+    uses: docker://projectoss/eks-helm-client:latest
     env:
-        REGION_CODE: <your-region-code>
-        CLUSTER_NAME: <your-cluster-name>
+      REGION_CODE: <your-region-code>
+      CLUSTER_NAME: <your-cluster-name>
     with:
-        args: >
-            bash -c "
-                helm repo add bitnami https://charts.bitnami.com/bitnami;
-                helm repo update;
-                helm install bitnami/mysql --generate-name
-            "
+      args: >
+        bash -c "
+          helm repo add bitnami https://charts.bitnami.com/bitnami;
+          helm repo update;
+          helm install bitnami/mysql --generate-name
+        "
 ```
-
 For more detailed usage instructions, please refer to the [action.yaml](https://github.com/open-source-srilanka/examples/blob/master/eks-helm-client/.github/workflows/action.yaml) in this repository.
+
+## Security Notes
+
+- The container runs as a **non-root user** (`kubectl`, uid 1000) for improved security.
+- The kubeconfig is written to `/opt/kubernetes/config`, owned by the `kubectl` user.
+- AWS authentication uses `aws eks get-token` via `aws-iam-authenticator`, configured automatically in the generated kubeconfig.
 
 ## Contributing
 
-We welcome contributions from the community to enhance and improve this project! If you'd like to contribute, please follow these steps:
+We welcome contributions from the community! To contribute:
 
-1. **Fork the Repository**: Click the "Fork" button at the top right corner of this repository. This will create a copy of the project in your GitHub account.
+1. **Fork the Repository**: Click the "Fork" button at the top right of this repository.
+2. **Clone the Fork**: Clone the forked repository to your local machine.
+3. **Make Changes**: Implement your desired changes or improvements.
+4. **Commit Changes**: Commit with a clear, descriptive message.
+5. **Push Changes**: Push your changes to your forked repository.
+6. **Create Pull Request**: Open a pull request against the original repository.
+7. **Wait for Review**: A maintainer will review your PR and may request changes.
+8. **Celebrate**: Once merged, your contribution is part of the project!
 
-2. **Clone the Fork**: On your local machine, use `git` to clone the forked repository:
-
-3. **Make Changes**: Now, you can make your desired changes and improvements to the codebase.
-
-4. **Commit Changes**: Once you've made your changes, commit them with a descriptive commit message:
-
-5. **Push Changes**: Push your changes to your forked repository:
-
-6. **Create Pull Request**: Go to the original repository (the one you forked) on GitHub. You should see a "Compare & pull request" button. Click on it, and you can create a pull request to submit your changes for review.
-
-7. **Wait for Review**: Your pull request will be reviewed by the project maintainers. Be open to feedback and iterate on your changes if necessary.
-
-8. **Celebrate**: Once your pull request is approved and merged, your contributions will be part of the project. Congratulations on your successful contribution!
-
-Please ensure your code adheres to our coding guidelines and standards, and provide proper tests for any new features you introduce. Thank you for contributing to this project and helping us make it even better!
+Please ensure your code follows the project's coding guidelines and includes appropriate tests for any new functionality.
 
 ## License
 
@@ -109,5 +140,5 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Copyright (c) 2023 ProjectOSS
+Copyright (c) 2023 [Dinush Chathurya](https://dinushchathurya.me/) @ [Open Source Srilanka](https://github.com/open-source-srilanka)
 
